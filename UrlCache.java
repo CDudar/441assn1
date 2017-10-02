@@ -44,6 +44,8 @@ public class UrlCache {
 		int portNumber;
 		boolean portNumberGiven = false;
 		
+		String response;
+		
 		String s, tmp;
 		Scanner inputStream;
 		PrintWriter outputStream;
@@ -59,11 +61,8 @@ public class UrlCache {
 			
 		}
 					
-		//System.out.println(hostName);
-		//System.out.println(pathName);
-//TEST TEST TEST TEST
-//WILL GIT COMMIT -a -m "message" work??
-	
+
+
 		try {
 			// connects to port server app listening at port 8888 in the same
 			// machine
@@ -74,8 +73,14 @@ public class UrlCache {
 					socket.getOutputStream()));
 			inputStream = new Scanner(new InputStreamReader(
 					socket.getInputStream()));
-			userinput = new Scanner(System.in);
+			
+			outputStream.println("get " + url);
+			System.out.println("hello");
+			response = inputStream.nextLine();
 
+			
+			System.out.println(response);
+			
 		}
 		catch (Exception e) {
 			System.out.println("Error: " + e.getMessage());
