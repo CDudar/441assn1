@@ -55,19 +55,13 @@ public class UrlCache {
 		if(url.indexOf(":") != -1) {
 			portNumber = Integer.parseInt(url.substring(url.indexOf(":") + 1, url.indexOf("/")));
 			portNumberGiven = true;
-			System.out.println(portNumber);
+			//System.out.println(portNumber);
 			
 		}
 					
-		System.out.println(hostName);
-		System.out.println(pathName);
+		//System.out.println(hostName);
+		//System.out.println(pathName);
 
-
-		
-
-		
-		/**
-		
 		
 		try {
 			// connects to port server app listening at port 8888 in the same
@@ -85,7 +79,7 @@ public class UrlCache {
 		catch (Exception e) {
 			System.out.println("Error: " + e.getMessage());
 		}
-		**/
+
 		
 	}
 	
