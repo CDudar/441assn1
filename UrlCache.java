@@ -3,6 +3,8 @@ package assignment1;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 
 /**
@@ -14,9 +16,15 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
 import java.net.Socket;
+
+import java.text.ParsePosition;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Scanner;
 
@@ -33,7 +41,27 @@ public class UrlCache {
      * @throws IOException if encounters any errors/exceptions
      */
 	public UrlCache() throws IOException {
-		catalogue = new HashMap<String, String>();
+		
+		
+	
+			try {
+				
+				
+				FileInputStream fis = new FileInputStream("catalogueFile");
+				ObjectInputStream ois = new ObjectInputStream(fis);
+				catalogue = (HashMap<String, String>) ois.readObject();
+				ois.close();
+			} 
+			catch(FileNotFoundException e) {
+				System.out.println("Creating hash");
+				catalogue = new HashMap<String, String>();
+			}
+			
+			catch (ClassNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
 	}
 	
     /**
@@ -81,9 +109,15 @@ public class UrlCache {
 			outputStream = new PrintWriter(new DataOutputStream(
 					socket.getOutputStream()));
 			
+			
+			String catalogueLastMod = "";
+			if(catalogue.containsKey(url)){
+				catalogueLastMod = catalogue.get(url);
+			}
+			
 			outputStream.print("GET " + pathName + " HTTP/1.1\r\n");
+			outputStream.print("If-modified-since: "  + catalogueLastMod + "\r\n");
 			outputStream.print("Host: "+ hostName + ":" + portNumber + "\r\n");
-			//outputStream.print("If-modified-since: " + "" + "\r\n");
 			outputStream.print("\r\n");
 			outputStream.flush();
 
@@ -125,6 +159,9 @@ public class UrlCache {
 				}
 			}
 			
+			
+			
+			
 			headScanner.close();
 
 			System.out.println("contentLength = " + objectLength);
@@ -132,7 +169,8 @@ public class UrlCache {
 			System.out.println(http_response_header_string);
 			
 			if(http_response_header_string.contains("304 Not Modified")) {
-					//logic for not modified files;
+					//Do nothing
+				System.out.println("Already have file, not downloading");
 			}
 			else if(http_response_header_string.contains("200 OK")){
 				
@@ -164,17 +202,31 @@ public class UrlCache {
 						
 					}
 					
-					
 					fos.close();
 					
 				}
 				catch(IOException e) {
 					//error for downloading file
 				}
+				
+				// write object to file
+				
+				catalogue.put(url, lastModified);
+					
+				FileOutputStream fosObj = new FileOutputStream("catalogueFile");
+				ObjectOutputStream oos = new ObjectOutputStream(fosObj);
+				oos.writeObject(catalogue);
+				oos.flush();
+				oos.close();
+					
+				
+				//System.out.println(catalogue.size());
+				
 			}
 			
 			
 			socket.close();
+
 				
 		}
 		catch (Exception e) {
@@ -194,10 +246,20 @@ public class UrlCache {
      * @param url 	URL of the object 
 	 * @return the Last-Modified time in millisecond as in Date.getTime()
      */
-	public long getLastModified(String url) {
-		long millis = 0;
+	public long getLastModified(String url) throws RuntimeException {
 		
-		return millis;
+		if(catalogue.containsKey(url)) {
+			String lastModified = catalogue.get(url);
+			SimpleDateFormat format = new SimpleDateFormat("EEE, dd MMM yyyy hh:mm:ss zzz");
+			Date date = format.parse(lastModified, new ParsePosition(0));
+			long millis = date.getTime();
+			return millis;
+		}
+		else {
+			throw new RuntimeException();
+		}
+
+
 	}
 
 }
