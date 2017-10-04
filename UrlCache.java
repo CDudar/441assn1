@@ -1,5 +1,6 @@
 package assignment1;
 
+import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 
 /**
@@ -9,9 +10,11 @@ import java.io.DataOutputStream;
  */
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Scanner;
 
@@ -41,50 +44,119 @@ public class UrlCache {
 		
 		String hostName;
 		String pathName;
-		int portNumber;
-		boolean portNumberGiven = false;
+		int portNumber = 80;
+		String response = "";
+		String line = "";
 		
-		String response;
+		byte[] byteArray = new byte[1024 * 10];
 		
-		String s, tmp;
-		Scanner inputStream;
+		
+		InputStream inputStream;
 		PrintWriter outputStream;
-		Scanner userinput;
+
 		
 		hostName = url.substring(0, url.indexOf("/"));
 		pathName = url.substring(url.indexOf("/"));
 		
 		if(url.indexOf(":") != -1) {
+			hostName = url.substring(0, url.indexOf(":"));
 			portNumber = Integer.parseInt(url.substring(url.indexOf(":") + 1, url.indexOf("/")));
-			portNumberGiven = true;
-			//System.out.println(portNumber);
 			
 		}
 					
-
+		System.out.println(hostName);
+		System.out.println(pathName);
+		System.out.println(portNumber);
 
 		try {
 			// connects to port server app listening at port 8888 in the same
 			// machine
-			Socket socket = new Socket(hostName, 8888);
+			Socket socket = new Socket(hostName, portNumber);
 
 			// Create necessary streams
 			outputStream = new PrintWriter(new DataOutputStream(
 					socket.getOutputStream()));
-			inputStream = new Scanner(new InputStreamReader(
-					socket.getInputStream()));
+			inputStream = socket.getInputStream();
 			
-			outputStream.println("get " + url);
-			System.out.println("hello");
-			response = inputStream.nextLine();
+			outputStream.print("GET " + pathName + " HTTP/1.1\r\n");
+			outputStream.print("Host: "+ hostName + ":" + portNumber + "\r\n");
+			//outputStream.print("If-modified-since: " + "" + "\r\n");
+			outputStream.print("\r\n");
+			outputStream.flush();
 
 			
-			System.out.println(response);
+			byte[] http_response_header_bytes = new byte[2048];
+			byte[] http_object_bytes = new byte[1024];
+			String http_response_header_string = "";
 			
+			int off = 0;
+			int num_byte_read = 0;
+			
+
+			/*read http header*/
+			
+			try {
+			while(num_byte_read != -1) {
+				socket.getInputStream().read(http_response_header_bytes, off, 1);				
+				off++;
+				http_response_header_string = new String(http_response_header_bytes, 0, off, "US-ASCII");
+				if(http_response_header_string.contains("\r\n\r\n"))
+						break;
+				}
+			}
+			catch(IOException e) {
+				//exception handling
+			}
+			
+			
+			if(http_response_header_string.contains("304 Not Modified")) {
+					//logic for not modified files;
+			}
+			else if(http_response_header_string.contains("200 OK")){
+				
+				int counter = 0;
+				try {
+					while(num_byte_read != -1) {
+						num_byte_read = socket.getInputStream().read(http_object_bytes);
+						
+						
+					}
+					
+				}
+				catch(IOException e) {
+					//error for downloading file
+				}
+			}
+
+
+			//byteArray = getBytesFromInputStream(inputStream);
+			//response = new String(byteArray);
+			
+			Scanner reader = new Scanner(response);
+			System.out.println(reader.nextLine());
+			
+			
+			
+			
+			//System.out.println(Arrays.toString(byteArray));
+				
+
+			
+			//String myBytes = new String(byteArray);
+			//System.out.println(myBytes);
+			
+			
+			
+			socket.close();
+				
 		}
 		catch (Exception e) {
 			System.out.println("Error: " + e.getMessage());
 		}
+		
+		
+
+		System.out.println("------------------------------------------");
 
 		
 	}
@@ -99,6 +171,23 @@ public class UrlCache {
 		long millis = 0;
 		
 		return millis;
+	}
+	
+	
+	
+	public static byte[] getBytesFromInputStream(InputStream is) throws IOException
+	{
+	    try (ByteArrayOutputStream os = new ByteArrayOutputStream();)
+	    {
+	        byte[] buffer = new byte[0xFFFF];
+
+	        for (int len; (len = is.read(buffer)) != -1;)
+	            os.write(buffer, 0, len);
+
+	        os.flush();
+
+	        return os.toByteArray();
+	    }
 	}
 
 }
