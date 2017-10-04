@@ -138,9 +138,11 @@ public class UrlCache {
 				
 				int counter = 0; //keeps track of amount of bytes read
 				
-				FileOutputStream fos = new FileOutputStream(pathName);
+				File f = new File(hostName + pathName);
+				File f2 = f.getParentFile();
+				f2.mkdirs();
 				
-				
+				FileOutputStream fos = new FileOutputStream(f);
 				
 				try {
 					while(num_byte_read != -1) {
@@ -191,23 +193,6 @@ public class UrlCache {
 		long millis = 0;
 		
 		return millis;
-	}
-	
-	
-	
-	public static byte[] getBytesFromInputStream(InputStream is) throws IOException
-	{
-	    try (ByteArrayOutputStream os = new ByteArrayOutputStream();)
-	    {
-	        byte[] buffer = new byte[0xFFFF];
-
-	        for (int len; (len = is.read(buffer)) != -1;)
-	            os.write(buffer, 0, len);
-
-	        os.flush();
-
-	        return os.toByteArray();
-	    }
 	}
 
 }
