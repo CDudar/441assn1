@@ -2,6 +2,7 @@ package assignment1;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
+import java.io.File;
 import java.io.FileOutputStream;
 
 /**
@@ -46,12 +47,13 @@ public class UrlCache {
 		String hostName;
 		String pathName;
 		int portNumber = 80;
-		String line = "";
 		
+		String line = "";
 		byte[] byteArray = new byte[1024 * 10];
 		
 		PrintWriter outputStream;
 
+		/* url String Parsing */
 		
 		hostName = url.substring(0, url.indexOf("/"));
 		pathName = url.substring(url.indexOf("/"));
@@ -65,6 +67,10 @@ public class UrlCache {
 		System.out.println(hostName);
 		System.out.println(pathName);
 		System.out.println(portNumber + "\n");
+		
+		
+		
+		
 
 		try {
 			// connects to port server app listening at port 8888 in the same
@@ -132,7 +138,7 @@ public class UrlCache {
 				
 				int counter = 0; //keeps track of amount of bytes read
 				
-				FileOutputStream fos = new FileOutputStream("pathName");
+				FileOutputStream fos = new FileOutputStream(pathName);
 				
 				
 				
