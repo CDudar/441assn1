@@ -110,16 +110,15 @@ public class UrlCache {
 			
 			Scanner headScanner = new Scanner(http_response_header_string);
 			String lastModified = "";
-			int contentLength = 0;
+			int objectLength = 0;
 			
 			while(headScanner.hasNextLine()) {
-				
 				line = headScanner.nextLine();
 				
 				if(line.contains("Last-Modified")) {
 					lastModified = line.substring(line.indexOf(":") + 2);
 				}else if(line.contains("Content-Length")) {
-					contentLength = Integer.parseInt(line.substring(line.indexOf(":") + 2));
+					objectLength = Integer.parseInt(line.substring(line.indexOf(":") + 2));
 				}
 			}
 
@@ -132,11 +131,17 @@ public class UrlCache {
 			}
 			else if(http_response_header_string.contains("200 OK")){
 				
-				int counter = 0;
+				int counter = 0; //keeps track of amount of bytes read
 				try {
 					while(num_byte_read != -1) {
+						
+						if(counter == objectLength)
+							break;
+						
+						//read some amount of bytes and write them to file
 						num_byte_read = socket.getInputStream().read(http_object_bytes);
 						
+						counter++;
 						
 					}
 					
