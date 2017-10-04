@@ -138,19 +138,23 @@ public class UrlCache {
 				
 				int counter = 0; //keeps track of amount of bytes read
 				
-				File f = new File(hostName + pathName);
-				File f2 = f.getParentFile();
-				f2.mkdirs();
 				
+				File f = new File(hostName + pathName);
+				f.getParentFile().mkdirs();
 				FileOutputStream fos = new FileOutputStream(f);
 				
 				try {
 					while(num_byte_read != -1) {
 						
-						if(counter == objectLength)
+						if(counter == objectLength) {
+							
+						System.out.println("counter == object length");	
+							
 							break;
-						
+						}	
 						//read some amount of bytes and write them to file
+						
+
 						num_byte_read = socket.getInputStream().read(http_object_bytes);
 						
 						fos.write(http_object_bytes);
@@ -159,6 +163,7 @@ public class UrlCache {
 						System.out.println(counter);
 						
 					}
+					
 					
 					fos.close();
 					
