@@ -17,8 +17,8 @@ public class Tester {
 		// include whatever URL you like
 		// these are just some samples
 		String[] url = {//"people.ucalgary.ca/~mghaderi/index.html",
-						"people.ucalgary.ca/~mghaderi/test/uc.gif"
-						//"people.ucalgary.ca/~mghaderi/test/a.pdf"
+						//"people.ucalgary.ca/~mghaderi/test/uc.gif"
+						"people.ucalgary.ca/~mghaderi/test/a.pdf"
 						//"people.ucalgary.ca:80/~mghaderi/test/test.html"
 				};
 		

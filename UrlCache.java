@@ -108,6 +108,24 @@ public class UrlCache {
 				//exception handling
 			}
 			
+			Scanner headScanner = new Scanner(http_response_header_string);
+			String lastModified = "";
+			int contentLength = 0;
+			
+			while(headScanner.hasNextLine()) {
+				
+				line = headScanner.nextLine();
+				
+				if(line.contains("Last-Modified")) {
+					lastModified = line.substring(line.indexOf(":") + 2);
+				}else if(line.contains("Content-Length")) {
+					contentLength = Integer.parseInt(line.substring(line.indexOf(":") + 2));
+				}
+			}
+
+			//System.out.println("contentLength = " + contentLength);
+			//System.out.println("lastModified = " + lastModified);
+			//System.out.println(http_response_header_string);
 			
 			if(http_response_header_string.contains("304 Not Modified")) {
 					//logic for not modified files;
