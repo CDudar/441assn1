@@ -2,6 +2,7 @@ package assignment1;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
+import java.io.FileOutputStream;
 
 /**
  * UrlCache Class
@@ -45,13 +46,10 @@ public class UrlCache {
 		String hostName;
 		String pathName;
 		int portNumber = 80;
-		String response = "";
 		String line = "";
 		
 		byte[] byteArray = new byte[1024 * 10];
 		
-		
-		InputStream inputStream;
 		PrintWriter outputStream;
 
 		
@@ -66,7 +64,7 @@ public class UrlCache {
 					
 		System.out.println(hostName);
 		System.out.println(pathName);
-		System.out.println(portNumber);
+		System.out.println(portNumber + "\n");
 
 		try {
 			// connects to port server app listening at port 8888 in the same
@@ -76,7 +74,6 @@ public class UrlCache {
 			// Create necessary streams
 			outputStream = new PrintWriter(new DataOutputStream(
 					socket.getOutputStream()));
-			inputStream = socket.getInputStream();
 			
 			outputStream.print("GET " + pathName + " HTTP/1.1\r\n");
 			outputStream.print("Host: "+ hostName + ":" + portNumber + "\r\n");
@@ -121,10 +118,12 @@ public class UrlCache {
 					objectLength = Integer.parseInt(line.substring(line.indexOf(":") + 2));
 				}
 			}
+			
+			headScanner.close();
 
-			//System.out.println("contentLength = " + contentLength);
-			//System.out.println("lastModified = " + lastModified);
-			//System.out.println(http_response_header_string);
+			System.out.println("contentLength = " + objectLength);
+			System.out.println("lastModified = " + lastModified);
+			System.out.println(http_response_header_string);
 			
 			if(http_response_header_string.contains("304 Not Modified")) {
 					//logic for not modified files;
@@ -132,6 +131,11 @@ public class UrlCache {
 			else if(http_response_header_string.contains("200 OK")){
 				
 				int counter = 0; //keeps track of amount of bytes read
+				
+				FileOutputStream fos = new FileOutputStream("pathName");
+				
+				
+				
 				try {
 					while(num_byte_read != -1) {
 						
@@ -141,33 +145,20 @@ public class UrlCache {
 						//read some amount of bytes and write them to file
 						num_byte_read = socket.getInputStream().read(http_object_bytes);
 						
-						counter++;
+						fos.write(http_object_bytes);
+						
+						counter+= num_byte_read;
+						System.out.println(counter);
 						
 					}
+					
+					fos.close();
 					
 				}
 				catch(IOException e) {
 					//error for downloading file
 				}
 			}
-
-
-			//byteArray = getBytesFromInputStream(inputStream);
-			//response = new String(byteArray);
-			
-			Scanner reader = new Scanner(response);
-			System.out.println(reader.nextLine());
-			
-			
-			
-			
-			//System.out.println(Arrays.toString(byteArray));
-				
-
-			
-			//String myBytes = new String(byteArray);
-			//System.out.println(myBytes);
-			
 			
 			
 			socket.close();
