@@ -42,11 +42,7 @@ public class UrlCache {
      */
 	public UrlCache() throws IOException {
 		
-		
-	
 			try {
-				
-				
 				FileInputStream fis = new FileInputStream("catalogueFile");
 				ObjectInputStream ois = new ObjectInputStream(fis);
 				catalogue = (HashMap<String, String>) ois.readObject();
@@ -72,20 +68,23 @@ public class UrlCache {
      */
 	public void getObject(String url) throws IOException {
 		
+		
+		//Variable initialization
 		String hostName;
 		String pathName;
-		int portNumber = 80;
+		int portNumber = 80; //Initialize portNumber to default: 80
 		
 		String line = "";
-		byte[] byteArray = new byte[1024 * 10];
 		
 		PrintWriter outputStream;
 
 		/* url String Parsing */
-		
 		hostName = url.substring(0, url.indexOf("/"));
 		pathName = url.substring(url.indexOf("/"));
 		
+		
+		
+		//If URL has colon, grab port-number
 		if(url.indexOf(":") != -1) {
 			hostName = url.substring(0, url.indexOf(":"));
 			portNumber = Integer.parseInt(url.substring(url.indexOf(":") + 1, url.indexOf("/")));
@@ -110,20 +109,28 @@ public class UrlCache {
 					socket.getOutputStream()));
 			
 			
+			//Get last-modified value of url from local catalogue
 			String catalogueLastMod = "";
 			if(catalogue.containsKey(url)){
 				catalogueLastMod = catalogue.get(url);
 			}
 			
+			
+			//HTTP GET Request
 			outputStream.print("GET " + pathName + " HTTP/1.1\r\n");
+			
+			//Check if requested page has been modified since last time it was downloaded
 			outputStream.print("If-modified-since: "  + catalogueLastMod + "\r\n");
 			outputStream.print("Host: "+ hostName + ":" + portNumber + "\r\n");
 			outputStream.print("\r\n");
 			outputStream.flush();
 
 			
+			//Initialize byte lists to hold header and object data
 			byte[] http_response_header_bytes = new byte[2048];
 			byte[] http_object_bytes = new byte[1024];
+			
+			//String for holding header response
 			String http_response_header_string = "";
 			
 			int off = 0;
@@ -131,6 +138,8 @@ public class UrlCache {
 			
 
 			/*read http header*/
+			
+			
 			
 			try {
 			while(num_byte_read != -1) {
@@ -218,7 +227,7 @@ public class UrlCache {
 				oos.writeObject(catalogue);
 				oos.flush();
 				oos.close();
-					
+						
 				
 				//System.out.println(catalogue.size());
 				
