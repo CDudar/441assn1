@@ -1,11 +1,7 @@
 package assignment1;
 
-import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
+
+
 
 /**
  * UrlCache Class
@@ -13,9 +9,14 @@ import java.io.FileOutputStream;
  *
  */
 
+//import statements
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
@@ -23,7 +24,6 @@ import java.net.Socket;
 
 import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Scanner;
@@ -31,6 +31,7 @@ import java.util.Scanner;
 
 public class UrlCache {
 
+	//catalogue declaration
 	HashMap<String, String> catalogue;
 	
 	
@@ -40,22 +41,25 @@ public class UrlCache {
 	 *
      * @throws IOException if encounters any errors/exceptions
      */
+	@SuppressWarnings("unchecked")
 	public UrlCache() throws IOException {
 		
+		
+			//attempt to open the local cache
+			//if it exists, load in the url keys and lastModified vals into the catalogue
 			try {
 				FileInputStream fis = new FileInputStream("catalogueFile");
 				ObjectInputStream ois = new ObjectInputStream(fis);
 				catalogue = (HashMap<String, String>) ois.readObject();
 				ois.close();
 			} 
+			//if the local cache does not exist, initialize a new catalogue
 			catch(FileNotFoundException e) {
-				System.out.println("Creating hash");
 				catalogue = new HashMap<String, String>();
 			}
 			
 			catch (ClassNotFoundException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				System.out.println("Error: " + e.getMessage());
 			}
 
 	}
@@ -90,14 +94,6 @@ public class UrlCache {
 			portNumber = Integer.parseInt(url.substring(url.indexOf(":") + 1, url.indexOf("/")));
 			
 		}
-					
-		System.out.println(hostName);
-		System.out.println(pathName);
-		System.out.println(portNumber + "\n");
-		
-		
-		
-		
 
 		try {
 			// connects to port server app listening at port 8888 in the same
@@ -109,12 +105,11 @@ public class UrlCache {
 					socket.getOutputStream()));
 			
 			
-			//Get last-modified value of url from local catalogue
+			//If local catalogue has url, Get the associated last-modified value
 			String catalogueLastMod = "";
 			if(catalogue.containsKey(url)){
 				catalogueLastMod = catalogue.get(url);
 			}
-			
 			
 			//HTTP GET Request
 			outputStream.print("GET " + pathName + " HTTP/1.1\r\n");
@@ -126,38 +121,17 @@ public class UrlCache {
 			outputStream.flush();
 
 			
-			//Initialize byte lists to hold header and object data
-			byte[] http_response_header_bytes = new byte[2048];
+			//Initialize byte list to hold object data
 			byte[] http_object_bytes = new byte[1024];
 			
-			//String for holding header response
-			String http_response_header_string = "";
-			
-			int off = 0;
-			int num_byte_read = 0;
-			
+			/*read-in http header */
+			String http_response_header_string = getHTTPHeader(socket);
 
-			/*read http header*/
-			
-			
-			
-			try {
-			while(num_byte_read != -1) {
-				socket.getInputStream().read(http_response_header_bytes, off, 1);				
-				off++;
-				http_response_header_string = new String(http_response_header_bytes, 0, off, "US-ASCII");
-				if(http_response_header_string.contains("\r\n\r\n"))
-						break;
-				}
-			}
-			catch(IOException e) {
-				//exception handling
-			}
-			
 			Scanner headScanner = new Scanner(http_response_header_string);
 			String lastModified = "";
 			int objectLength = 0;
 			
+			//parse out last-modified and content-length values from header
 			while(headScanner.hasNextLine()) {
 				line = headScanner.nextLine();
 				
@@ -167,47 +141,42 @@ public class UrlCache {
 					objectLength = Integer.parseInt(line.substring(line.indexOf(":") + 2));
 				}
 			}
-			
-			
-			
-			
+	
 			headScanner.close();
 
-			System.out.println("contentLength = " + objectLength);
-			System.out.println("lastModified = " + lastModified);
-			System.out.println(http_response_header_string);
-			
+
 			if(http_response_header_string.contains("304 Not Modified")) {
-					//Do nothing
-				System.out.println("Already have file, not downloading");
+				//Do nothing, page has not been modified since the last time it was downloaded
+				System.out.println(url + " - File already in local cache, not downloading");
 			}
+			
+			//If the cache does not hold the page, download it
 			else if(http_response_header_string.contains("200 OK")){
 				
-				int counter = 0; //keeps track of amount of bytes read
+				System.out.println("Downloading - " + url);
 				
-				
+				//Recreating directory structure locally
 				File f = new File(hostName + pathName);
 				f.getParentFile().mkdirs();
 				FileOutputStream fos = new FileOutputStream(f);
 				
+				int counter = 0; //keeps track of amount of bytes read
+				int num_byte_read = 0;
+				
 				try {
+					
 					while(num_byte_read != -1) {
 						
+						//read in bytes until the entire objects size has been read in
 						if(counter == objectLength) {
-							
-						System.out.println("counter == object length");	
-							
 							break;
 						}	
-						//read some amount of bytes and write them to file
-						
-
+						//read some amount of bytes and write them to file output stream
 						num_byte_read = socket.getInputStream().read(http_object_bytes);
-						
 						fos.write(http_object_bytes);
 						
+						//increment counter by how many bytes were read for this iteration
 						counter+= num_byte_read;
-						System.out.println(counter);
 						
 					}
 					
@@ -216,21 +185,20 @@ public class UrlCache {
 				}
 				catch(IOException e) {
 					//error for downloading file
+					System.out.println("Error: " + e.getMessage());
 				}
 				
-				// write object to file
 				
+				//populate catalogue with url key and lastmodified value
 				catalogue.put(url, lastModified);
 					
+				//Write and save the catalogue into a local file
 				FileOutputStream fosObj = new FileOutputStream("catalogueFile");
 				ObjectOutputStream oos = new ObjectOutputStream(fosObj);
 				oos.writeObject(catalogue);
 				oos.flush();
 				oos.close();
 						
-				
-				//System.out.println(catalogue.size());
-				
 			}
 			
 			
@@ -242,11 +210,8 @@ public class UrlCache {
 			System.out.println("Error: " + e.getMessage());
 		}
 		
-		
-
 		System.out.println("------------------------------------------");
 
-		
 	}
 	
     /**
@@ -270,5 +235,40 @@ public class UrlCache {
 
 
 	}
+	
+	
+	public String getHTTPHeader(Socket socket) throws IOException {
+		
+		//integers to represent offset while reading and the number of bytes read
+		int off = 0;
+		int num_byte_read = 0;
+		
+		//initialize bytelist to hold data as it is read in
+		byte[] http_response_header_bytes = new byte[2048];
+		//String to hold header
+		String http_response_header_string = "";
+
+		/*read http header*/
+		try {
+		while(num_byte_read != -1) {
+			
+			//Read in one byte at a time until the end of the header is reached
+			socket.getInputStream().read(http_response_header_bytes, off, 1);				
+			off++;
+			http_response_header_string = new String(http_response_header_bytes, 0, off, "US-ASCII");
+			if(http_response_header_string.contains("\r\n\r\n"))
+					break;
+			}
+		}
+		catch(IOException e) {
+			throw new IOException();
+		}
+		
+		//return header string
+		return http_response_header_string;
+	}
+	
+	
+	
 
 }

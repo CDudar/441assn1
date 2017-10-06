@@ -9,6 +9,7 @@ package assignment1;
  */
 
 import java.io.IOException;
+import assignment1.UrlCache;
 
 public class Tester {
 	
