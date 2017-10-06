@@ -48,7 +48,7 @@ public class UrlCache {
 			//attempt to open the local cache
 			//if it exists, load in the url keys and lastModified vals into the catalogue
 			try {
-				FileInputStream fis = new FileInputStream("catalogueFile");
+				FileInputStream fis = new FileInputStream("catalogueFile.ser");
 				ObjectInputStream ois = new ObjectInputStream(fis);
 				catalogue = (HashMap<String, String>) ois.readObject();
 				ois.close();
@@ -122,11 +122,12 @@ public class UrlCache {
 
 			
 			//Initialize byte list to hold object data
-			byte[] http_object_bytes = new byte[1024];
+			byte[] http_object_bytes = new byte[4096];
 			
 			/*read-in http header */
 			String http_response_header_string = getHTTPHeader(socket);
 
+			
 			Scanner headScanner = new Scanner(http_response_header_string);
 			String lastModified = "";
 			int objectLength = 0;
@@ -149,7 +150,6 @@ public class UrlCache {
 				//Do nothing, page has not been modified since the last time it was downloaded
 				System.out.println(url + " - File already in local cache, not downloading");
 			}
-			
 			//If the cache does not hold the page, download it
 			else if(http_response_header_string.contains("200 OK")){
 				
@@ -159,41 +159,43 @@ public class UrlCache {
 				File f = new File(hostName + pathName);
 				f.getParentFile().mkdirs();
 				FileOutputStream fos = new FileOutputStream(f);
-				
+				//fos.close();
+
 				int counter = 0; //keeps track of amount of bytes read
 				int num_byte_read = 0;
 				
-				try {
+				while(num_byte_read != -1) {
 					
-					while(num_byte_read != -1) {
-						
-						//read in bytes until the entire objects size has been read in
-						if(counter == objectLength) {
-							break;
-						}	
-						//read some amount of bytes and write them to file output stream
-						num_byte_read = socket.getInputStream().read(http_object_bytes);
-						fos.write(http_object_bytes);
-						
-						//increment counter by how many bytes were read for this iteration
-						counter+= num_byte_read;
-						
+					//read in bytes until the entire objects size has been read in
+					if(counter == objectLength) {
+						break;
+					}	
+					//read some amount of bytes and write them to file output stream
+					try {
+					num_byte_read = socket.getInputStream().read(http_object_bytes);
+					fos.write(http_object_bytes);
+					fos.flush();
+					fos.getFD().sync();
 					}
+					catch(IOException e) {
+						System.out.println("Error downloading document, IOEXCEPTION");
+					}
+
 					
-					fos.close();
+					//increment counter by how many bytes were read for this iteration
+					counter+= num_byte_read;
 					
 				}
-				catch(IOException e) {
-					//error for downloading file
-					System.out.println("Error: " + e.getMessage());
-				}
+
+				
+				fos.close();
 				
 				
 				//populate catalogue with url key and lastmodified value
 				catalogue.put(url, lastModified);
 					
 				//Write and save the catalogue into a local file
-				FileOutputStream fosObj = new FileOutputStream("catalogueFile");
+				FileOutputStream fosObj = new FileOutputStream("catalogueFile.ser");
 				ObjectOutputStream oos = new ObjectOutputStream(fosObj);
 				oos.writeObject(catalogue);
 				oos.flush();

@@ -32,7 +32,6 @@ public class Tester {
 				cache.getObject(url[i]);
 			
 			
-			System.out.println("\n\n\n");
 			//System.out.println("Last-Modified for " + url[0] + " is: " + cache.getLastModified(url[0]));
 			//cache.getObject(url[0]);
 			//System.out.println("Last-Modified for " + url[0] + " is: " + cache.getLastModified(url[0]));
